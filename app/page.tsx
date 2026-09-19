@@ -51,6 +51,14 @@ function BookingModal({ type, onClose }: { type: 'table' | 'room' | null; onClos
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const today = new Date().toISOString().split('T')[0]
+
+  function closeBooking() {
+    setSubmitted(false)
+    setLoading(false)
+    setError('')
+    onClose()
+  }
+
   if (!type) return null
 
   async function submitBooking(event: React.FormEvent<HTMLFormElement>) {
@@ -81,11 +89,11 @@ function BookingModal({ type, onClose }: { type: 'table' | 'room' | null; onClos
   }
 
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeBooking()}>
       <div className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
-        <button className="icon-button modal-close" onClick={onClose} aria-label="Close booking form"><X /></button>
+        <button className="icon-button modal-close" onClick={closeBooking} aria-label="Close booking form"><X /></button>
         {submitted ? (
-          <div className="success-state"><div className="success-icon"><Check /></div><p className="eyebrow">REQUEST RECEIVED</p><h2>We&apos;ll be in touch.</h2><p>Your {type === 'table' ? 'table reservation' : 'room booking'} request is saved. Garuda will confirm availability directly.</p><button className="button button-dark" onClick={onClose}>Done</button></div>
+          <div className="success-state"><div className="success-icon"><Check /></div><p className="eyebrow">REQUEST RECEIVED</p><h2>We&apos;ll be in touch.</h2><p>Your {type === 'table' ? 'table reservation' : 'room booking'} request is saved. Garuda will confirm availability directly.</p><button className="button button-dark" onClick={closeBooking}>Done</button></div>
         ) : (
           <form onSubmit={submitBooking}>
             <p className="eyebrow">GARUDA / {type === 'table' ? 'TABLE RESERVATION' : 'ROOM REQUEST'}</p>
@@ -164,7 +172,7 @@ export default function Page() {
       <section className="section location-section" id="contact"><div className="page-shell location-grid"><div><p className="eyebrow">06 / FIND GARUDA</p><h2>Good things<br /><em>are close by.</em></h2><p className="location-copy">Main Road, Beside GV Mall,<br />Sathupally, Telangana 507303,<br />India</p><div className="contact-lines"><a href="tel:XXXXXXXXXX"><Phone /> XXXXXXXXXX</a><a href="mailto:hello@garudarestaurant.com"><Send /> hello@garudarestaurant.com</a><span><Clock3 /> Opening hours — editable placeholder</span></div><div className="location-actions"><a className="button button-dark" href={mapsUrl} target="_blank" rel="noreferrer">Open in Google Maps <ArrowRight data-icon="inline-end" /></a><button className="button button-outline-dark" onClick={() => setBooking('table')}>Book a table</button></div></div><div className="map-card"><div className="map-grid-lines" /><div className="map-pin"><MapPin /></div><div className="map-label"><strong>GARUDA</strong><span>SATHUPALLY / TELANGANA</span></div></div></div></section>
 
       <footer className="footer"><div className="page-shell footer-grid"><div><Logo /><p className="footer-tagline">Indian restaurant & rooms.<br />Flavours. Comfort. Hospitality.</p></div><div><p className="footer-label">Explore</p><a href="#menu">Menu</a><a href="#rooms">Rooms</a><a href="#tables">Tables</a><a href="#gallery">Gallery</a></div><div><p className="footer-label">Visit</p><p>Main Road, Beside GV Mall<br />Sathupally, Telangana 507303</p><a href={mapsUrl} target="_blank" rel="noreferrer">Get directions <ArrowRight /></a></div><div><p className="footer-label">Make a request</p><button className="footer-link" onClick={() => setBooking('table')}>Book a table <ArrowRight /></button><button className="footer-link" onClick={() => setBooking('room')}>Book a room <ArrowRight /></button><a className="social-link" href="#contact"><Sparkles /> Instagram</a></div></div><div className="page-shell footer-bottom"><span>© 2026 Garuda. All rights reserved.</span><span>Content marked editable can be replaced with final details.</span></div></footer>
-      <BookingModal type={booking} onClose={() => setBooking(null)} />
+      <BookingModal key={booking ? `booking-${booking}` : 'booking-closed'} type={booking} onClose={() => setBooking(null)} />
     </main>
   )
 }
