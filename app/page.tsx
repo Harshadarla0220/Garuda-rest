@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import type { FormEvent } from 'react'
 import Image from 'next/image'
+import { supabase } from '@/lib/supabase'
 import {
   ArrowDown,
   ArrowRight,
@@ -46,36 +48,69 @@ function Logo() {
 
 function BookingModal({ type, onClose }: { type: 'table' | 'room' | null; onClose: () => void }) {
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const today = new Date().toISOString().split('T')[0]
   if (!type) return null
+
+  async function submitBooking(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setError('')
+    const form = new FormData(event.currentTarget)
+    const value = (key: string) => String(form.get(key) || '')
+    if (!supabase) {
+      setLoading(false)
+      setError('Booking service is temporarily unavailable. Please call Garuda directly.')
+      return
+    }
+    const result = type === 'table'
+      ? await supabase.rpc('submit_table_reservation', {
+          p_name: value('name'), p_phone: value('phone'), p_email: value('email'),
+          p_reservation_date: value('date'), p_reservation_time: value('time'),
+          p_guest_count: Number(value('guests')), p_table_type: value('table_type'), p_special_request: value('special_request'),
+        })
+      : await supabase.rpc('submit_room_booking', {
+          p_guest_name: value('name'), p_phone: value('phone'), p_email: value('email'),
+          p_check_in: value('check_in'), p_check_out: value('check_out'), p_guest_count: Number(value('guests')),
+          p_room_type: value('room_type'), p_rooms_requested: Number(value('rooms')), p_special_request: value('special_request'),
+        })
+    setLoading(false)
+    if (result.error) setError(result.error.message.replace(/^.*?: /, ''))
+    else setSubmitted(true)
+  }
+
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <div className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
         <button className="icon-button modal-close" onClick={onClose} aria-label="Close booking form"><X /></button>
         {submitted ? (
-          <div className="success-state"><div className="success-icon"><Check /></div><p className="eyebrow">REQUEST RECEIVED</p><h2>We&apos;ll be in touch.</h2><p>Your {type === 'table' ? 'table reservation' : 'room booking'} request has been noted. Garuda will confirm availability directly.</p><button className="button button-dark" onClick={onClose}>Done</button></div>
+          <div className="success-state"><div className="success-icon"><Check /></div><p className="eyebrow">REQUEST RECEIVED</p><h2>We&apos;ll be in touch.</h2><p>Your {type === 'table' ? 'table reservation' : 'room booking'} request is saved. Garuda will confirm availability directly.</p><button className="button button-dark" onClick={onClose}>Done</button></div>
         ) : (
-          <form onSubmit={(event) => { event.preventDefault(); setSubmitted(true) }}>
+          <form onSubmit={submitBooking}>
             <p className="eyebrow">GARUDA / {type === 'table' ? 'TABLE RESERVATION' : 'ROOM REQUEST'}</p>
             <h2 id="booking-title">{type === 'table' ? 'Reserve your table.' : 'Plan your stay.'}</h2>
             <p className="modal-intro">A request, not an instant confirmation. We&apos;ll contact you using the details below.</p>
             <div className="form-grid">
-              <label>Full name<input required placeholder="Your name" /></label>
-              <label>Phone number<input required type="tel" placeholder="XXXXXXXXXX" /></label>
-              <label>Email<input type="email" placeholder="you@example.com" /></label>
+              <label>Full name<input required name="name" placeholder="Your name" /></label>
+              <label>Phone number<input required name="phone" type="tel" placeholder="XXXXXXXXXX" /></label>
+              <label>Email<input name="email" type="email" placeholder="you@example.com" /></label>
               {type === 'table' ? <>
-                <label>Date<input required type="date" min={new Date().toISOString().split('T')[0]} /></label>
-                <label>Preferred time<input required type="time" /></label>
-                <label>Guests<select defaultValue="2"><option>2 guests</option><option>3 guests</option><option>4 guests</option><option>5+ guests</option></select></label>
-                <label>Table type<select defaultValue="2-Seater"><option>2-Seater</option><option>4-Seater</option><option>Family</option></select></label>
+                <label>Date<input required name="date" type="date" min={today} /></label>
+                <label>Preferred time<input required name="time" type="time" /></label>
+                <label>Guests<select name="guests" defaultValue="2"><option value="2">2 guests</option><option value="3">3 guests</option><option value="4">4 guests</option><option value="5">5+ guests</option></select></label>
+                <label>Table type<select name="table_type" defaultValue="2-seater"><option value="2-seater">2-Seater</option><option value="4-seater">4-Seater</option><option value="family">Family</option></select></label>
               </> : <>
-                <label>Check-in<input required type="date" min={new Date().toISOString().split('T')[0]} /></label>
-                <label>Check-out<input required type="date" min={new Date().toISOString().split('T')[0]} /></label>
-                <label>Room type<select defaultValue="AC"><option>AC Room</option><option>Non-AC Room</option></select></label>
-                <label>Rooms requested<select defaultValue="1"><option>1 room</option><option>2 rooms</option><option>3 rooms</option><option>4 rooms</option></select></label>
+                <label>Check-in<input required name="check_in" type="date" min={today} /></label>
+                <label>Check-out<input required name="check_out" type="date" min={today} /></label>
+                <label>Guests<select name="guests" defaultValue="2"><option value="1">1 guest</option><option value="2">2 guests</option><option value="3">3 guests</option><option value="4">4 guests</option></select></label>
+                <label>Room type<select name="room_type" defaultValue="AC"><option value="AC">AC Room</option><option value="Non-AC">Non-AC Room</option></select></label>
+                <label>Rooms requested<select name="rooms" defaultValue="1"><option value="1">1 room</option><option value="2">2 rooms</option><option value="3">3 rooms</option><option value="4">4 rooms</option></select></label>
               </>}
-              <label className="full-field">Special request<textarea placeholder="Anything we should know?" rows={3} /></label>
+              <label className="full-field">Special request<textarea name="special_request" placeholder="Anything we should know?" rows={3} /></label>
             </div>
-            <button className="button button-dark full-button" type="submit">Send request <Send data-icon="inline-end" /></button>
+            {error && <p role="alert" className="form-error">{error}</p>}
+            <button className="button button-dark full-button" type="submit" disabled={loading}>{loading ? 'Checking availability…' : <>Send request <Send data-icon="inline-end" /></>}</button>
           </form>
         )}
       </div>
