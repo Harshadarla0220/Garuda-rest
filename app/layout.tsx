@@ -3,8 +3,13 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Garuda Restaurant & Rooms | Indian Restaurant in Sathupally',
+  description: 'Garuda is an Indian restaurant and accommodation destination on Main Road beside GV Mall in Sathupally, Telangana. Explore our food, rooms and booking options.',
+  openGraph: {
+    title: 'Garuda Restaurant & Rooms | Sathupally',
+    description: 'Good food. Comfortable stays. Warm hospitality.',
+    type: 'website',
+  },
   generator: 'v0.app',
   icons: {
     icon: [
@@ -26,11 +31,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
-  ],
+  colorScheme: 'light',
+  themeColor: '#641f28',
 }
 
 export default function RootLayout({
