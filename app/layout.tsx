@@ -10,7 +10,6 @@ export const metadata: Metadata = {
     description: 'Good food. Comfortable stays. Warm hospitality.',
     type: 'website',
   },
-  generator: 'v0.app',
   icons: {
     icon: [
       {
